@@ -5,6 +5,10 @@ import plotly.graph_objects as go
 from glob import glob
 import os
 from datetime import datetime
+import time
+import shutil
+import cv2
+import mediapipe as mp
 
 from modules.train_face_recognizer import train_eye_recognizer
 
@@ -70,6 +74,61 @@ if st.button("Retrain Face Recognizer"):
         else:
             st.error("Training failed. No data found in `face_training/`.")
 
+st.subheader("➕ Add New User")
+
+new_user = st.text_input("Enter new user name")
+
+if new_user:
+    max_photos = 20
+    num_photos = st.slider("How many snapshots to capture?", min_value=1, max_value=max_photos, value=3)
+
+    if st.button("Capture Snapshots for New User"):
+        os.makedirs(f"face_training/{new_user}", exist_ok=True)
+
+        mp_face_mesh = mp.solutions.face_mesh
+        face_mesh = mp_face_mesh.FaceMesh(max_num_faces=1, refine_landmarks=True)
+
+        cap = cv2.VideoCapture(0)
+        st.info(f"📸 Preparing to capture {num_photos} snapshots...")
+
+        with st.spinner("⏳ Starting in 3 seconds..."):
+            time.sleep(3)
+
+        st.info(f"🔄 Capturing now... {num_photos} total")
+        success_count = 0
+
+        for i in range(num_photos):
+            ret, frame = cap.read()
+            if not ret:
+                continue
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = face_mesh.process(rgb)
+
+            if results.multi_face_landmarks:
+                landmarks = results.multi_face_landmarks[0].landmark
+                LEFT_EYE = [33, 160, 158, 133, 153, 144]
+                RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+                img_h, img_w = frame.shape[:2]
+                eye_landmarks = LEFT_EYE + RIGHT_EYE
+                xs = [int(landmarks[i].x * img_w) for i in eye_landmarks]
+                ys = [int(landmarks[i].y * img_h) for i in eye_landmarks]
+                x_min, x_max = max(min(xs) - 10, 0), min(max(xs) + 10, img_w)
+                y_min, y_max = max(min(ys) - 10, 0), min(max(ys) + 10, img_h)
+
+                eye_crop = frame[y_min:y_max, x_min:x_max]
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filepath = f"face_training/{new_user}/{timestamp}_{i}.jpg"
+                cv2.imwrite(filepath, eye_crop)
+                success_count += 1
+
+            st.info(f"✅ Captured image {i+1} of {num_photos}")
+            time.sleep(1)  # Wait 1 second between captures
+
+        cap.release()
+        st.success(f"🎉 Saved {success_count} snapshots for '{new_user}'")
+
 # ------------------- SNAPSHOT GALLERY --------------------
 st.subheader("📸 Eye Snapshot Gallery (by Person)")
 snapshot_files = sorted(glob("snapshots/*.jpg"))
@@ -87,6 +146,15 @@ for name, files in gallery.items():
     for i, file in enumerate(files):
         with cols[i % 3]:
             st.image(file, caption=os.path.basename(file), width=200)
+
+st.subheader("🧑‍🤝‍🧑 Enrolled Users")
+
+users = sorted([d for d in os.listdir("face_training") if os.path.isdir(os.path.join("face_training", d))])
+if users:
+    for user in users:
+        st.markdown(f"- 👁️ **{user}** ({len(os.listdir(os.path.join('face_training', user)))} images)")
+else:
+    st.info("No users enrolled yet.")
 
 # ------------------- METRICS --------------------
 st.subheader("📊 Overview")
@@ -127,6 +195,28 @@ st.line_chart(df.set_index('time_min')[['pupil_diameter']], height=250, use_cont
 st.caption("Pupil Diameter Over Time")
 st.line_chart(df.set_index('time_min')[['health_score']], height=250, use_container_width=True)
 st.caption("Health Score Over Time")
+
+# ------------------- DELETE / RENAME USERS --------------------
+st.subheader("🗑 Delete a User")
+user_to_delete = st.selectbox("Select a user to delete", users, key="delete_user")
+if st.button("Delete User"):
+    try:
+        shutil.rmtree(f"face_training/{user_to_delete}")
+        st.success(f"Deleted user '{user_to_delete}'")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Failed to delete: {e}")
+
+st.subheader("✏️ Rename a User")
+user_to_rename = st.selectbox("Select a user to rename", users, key="rename_user")
+new_name = st.text_input("Enter new name", key="rename_input")
+if st.button("Rename User"):
+    try:
+        os.rename(f"face_training/{user_to_rename}", f"face_training/{new_name}")
+        st.success(f"Renamed '{user_to_rename}' to '{new_name}'")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Rename failed: {e}")
 
 # ------------------- DOWNLOAD --------------------
 st.subheader("📂 Export")
