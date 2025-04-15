@@ -1,0 +1,17 @@
+README.md
+setup.py
+app/eyeme.egg-info/PKG-INFO
+app/eyeme.egg-info/SOURCES.txt
+app/eyeme.egg-info/dependency_links.txt
+app/eyeme.egg-info/top_level.txt
+app/recognizer/__init__.py
+app/recognizer/eye_identifier.py
+app/recognizer/train_face_recognizer.py
+app/utils/__init__.py
+app/utils/logging_helpers.py
+app/utils/snapshot_helpers.py
+app/vision/__init__.py
+app/vision/blink_detection.py
+app/vision/health_score.py
+app/vision/pupil_dilation.py
+app/vision/redness_detection.py
