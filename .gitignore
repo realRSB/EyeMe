@@ -4,3 +4,4 @@ venv/
 snapshots/
 *.csv
 .DS_Store
+wpa_supplicant.conf
