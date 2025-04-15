@@ -9,7 +9,7 @@ charset-normalizer==3.4.1
 click==8.1.8
 contourpy==1.3.1
 cycler==0.12.1
--e git+https://github.com/realRSB/ICY.git@b061bd821ffbd3a74b2fa9a8c1b4094cfb7d5b07#egg=eyeme
+-e git+https://github.com/realRSB/Eyeme.git#egg=eyeme
 filelock==3.18.0
 flatbuffers==25.2.10
 fonttools==4.57.0
