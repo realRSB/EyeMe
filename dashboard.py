@@ -5,7 +5,8 @@ import plotly.graph_objects as go
 from glob import glob
 import os
 from datetime import datetime
-import subprocess
+
+from modules.train_face_recognizer import train_eye_recognizer
 
 # ------------------- PAGE CONFIG --------------------
 st.set_page_config(page_title="Eyeris Dashboard", layout="centered", page_icon="😎")
@@ -17,16 +18,11 @@ body, .stApp {
     background-color: black;
     color: white;
 }
-
 h1, h2, h3, h4, h5, h6, .stMarkdown, .stDataFrame, .stMetric, .stNumberInput, .stTextInput {
     color: white !important;
 }
-
-/* Hide main menu and footer */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-
-/* Center the title */
 .stApp > header, .block-container {
     text-align: center !important;
 }
@@ -57,30 +53,27 @@ if not dark_mode:
     """, unsafe_allow_html=True)
 
 # ------------------- LOAD DATA --------------------
-file = "eye_health_log.csv"
+file = "logs/eye_health_log.csv"
 try:
     df = pd.read_csv(file)
 except FileNotFoundError:
-    st.error("No data found. Run the main app to log some eye health data.")
+    st.error("No data found in logs/. Run the main app to log some eye health data.")
     st.stop()
 
-# ------------------- EYE SNAPSHOT GALLERY --------------------
-# --- Retrain Button ---
+# ------------------- RETRAIN MODEL --------------------
 st.subheader("🔁 Face Recognizer Control")
 if st.button("Retrain Face Recognizer"):
     with st.spinner("Retraining model on eye snapshots..."):
-        result = subprocess.run(["python3", "train_face_recognizer.py"], capture_output=True, text=True)
-        if result.returncode == 0:
+        success = train_eye_recognizer()
+        if success:
             st.success("Model retrained successfully!")
         else:
-            st.error("Retraining failed.")
-            st.code(result.stderr)
+            st.error("Training failed. No data found in `face_training/`.")
 
-# --- Snapshot Gallery by Person ---
+# ------------------- SNAPSHOT GALLERY --------------------
 st.subheader("📸 Eye Snapshot Gallery (by Person)")
 snapshot_files = sorted(glob("snapshots/*.jpg"))
 
-# Group by person name
 gallery = {}
 for file in snapshot_files:
     filename = os.path.basename(file)
@@ -88,7 +81,6 @@ for file in snapshot_files:
         name = filename.split("_")[0]
         gallery.setdefault(name, []).append(file)
 
-# Display in columns
 for name, files in gallery.items():
     st.markdown(f"### 👤 {name.capitalize()}")
     cols = st.columns(3)
@@ -136,10 +128,10 @@ st.caption("Pupil Diameter Over Time")
 st.line_chart(df.set_index('time_min')[['health_score']], height=250, use_container_width=True)
 st.caption("Health Score Over Time")
 
-# ------------------- DOWNLOAD LOG --------------------
+# ------------------- DOWNLOAD --------------------
 st.subheader("📂 Export")
 try:
     with open(file, "rb") as f:
         st.download_button("Download Full Eye Health CSV Log", data=f, file_name="eye_health_log.csv")
 except FileNotFoundError:
-    st.warning("CSV file not found.")
+    st.warning("CSV file not found in logs/.")
