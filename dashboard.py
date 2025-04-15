@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from glob import glob
 import os
 from datetime import datetime
+import subprocess
 
 # ------------------- PAGE CONFIG --------------------
 st.set_page_config(page_title="Eyeris Dashboard", layout="centered", page_icon="😎")
@@ -64,27 +65,36 @@ except FileNotFoundError:
     st.stop()
 
 # ------------------- EYE SNAPSHOT GALLERY --------------------
-st.subheader("📷 Daily Eye Snapshot Gallery")
-snapshot_files = sorted(glob("snapshots/eye_*.jpg"))[::-1]
+# --- Retrain Button ---
+st.subheader("🔁 Face Recognizer Control")
+if st.button("Retrain Face Recognizer"):
+    with st.spinner("Retraining model on eye snapshots..."):
+        result = subprocess.run(["python3", "train_face_recognizer.py"], capture_output=True, text=True)
+        if result.returncode == 0:
+            st.success("Model retrained successfully!")
+        else:
+            st.error("Retraining failed.")
+            st.code(result.stderr)
 
-if st.button("🔍 Show Last 7 Days Only"):
-    today = datetime.now()
-    snapshot_files = [f for f in snapshot_files if (today - datetime.strptime(os.path.basename(f).split("_")[1].split(".")[0], "%Y-%m-%d_%H-%M-%S")).days <= 7]
+# --- Snapshot Gallery by Person ---
+st.subheader("📸 Eye Snapshot Gallery (by Person)")
+snapshot_files = sorted(glob("snapshots/*.jpg"))
 
-if st.button("🔍 Reset Eye Snapshot Gallery"):
-    for f in glob("snapshots/eye_*.jpg"):
-        os.remove(f)
-    st.success("Snapshot gallery cleared. Refresh the app to see changes.")
-    st.stop()
+# Group by person name
+gallery = {}
+for file in snapshot_files:
+    filename = os.path.basename(file)
+    if "_" in filename:
+        name = filename.split("_")[0]
+        gallery.setdefault(name, []).append(file)
 
-if snapshot_files:
+# Display in columns
+for name, files in gallery.items():
+    st.markdown(f"### 👤 {name.capitalize()}")
     cols = st.columns(3)
-    for idx, file in enumerate(snapshot_files):
-        date_str = os.path.basename(file).split("_")[1].split(".")[0].replace("_", " ")
-        with cols[idx % 3]:
-            st.image(file, caption=f"{date_str}", width=200, use_container_width=False)
-else:
-    st.info("No snapshots found yet. Run the main app to capture your daily eye image.")
+    for i, file in enumerate(files):
+        with cols[i % 3]:
+            st.image(file, caption=os.path.basename(file), width=200)
 
 # ------------------- METRICS --------------------
 st.subheader("📊 Overview")
