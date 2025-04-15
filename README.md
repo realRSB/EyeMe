@@ -1,6 +1,6 @@
-# ICY: Intelligent Camera for Your Eyes
+# EyeMe: Intelligent Camera for Your Eyes
 
-ICY is a smart glasses project that monitors eye health metrics such as blink rate, redness, and pupil dilation using a Raspberry Pi Zero 2 W and a Pi Camera Module V2.
+EyeMe is a smart glasses project that monitors eye health metrics such as blink rate, redness, and pupil dilation using a Raspberry Pi Zero 2 W and a Pi Camera Module V2.
 
 ## Features
 
@@ -21,7 +21,7 @@ ICY is a smart glasses project that monitors eye health metrics such as blink ra
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/realRSB/ICY.git
+   git clone https://github.com/realRSB/EyeMe.git
    cd ICY
 
 2. Install dependencies:
