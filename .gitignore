@@ -1,7 +1,5 @@
 __pycache__/
 *.pyc
 venv/
-snapshots/
-*.csv
 .DS_Store
 wpa_supplicant.conf
