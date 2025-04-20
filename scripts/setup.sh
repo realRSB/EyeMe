@@ -1,12 +1,15 @@
 #!/bin/bash
 
 echo "🔧 Updating system and installing required system packages..."
-sudo apt-get update && sudo apt-get upgrade \
-  apt-get install python-opencv python3-opencv opencv-data \
-  pip3 install mediapipe-rpi3 \
-  pip3 install mediapipe-rpi4 \
-  pip3 install gtts \
-  apt install mpg321 \
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Install required system packages
+sudo apt-get install -y python3-opencv opencv-data mpg321
+
+# Install Python packages
+pip3 install mediapipe-rpi3
+pip3 install mediapipe-rpi4
+pip3 install gtts
 
 echo "📦 Creating Python virtual environment..."
 python3 -m venv venv
