@@ -2,7 +2,7 @@ import cv2
 import time
 import os
 from datetime import datetime
-import mediapipe as mp
+import mediapipe_rpi3 as mp
 
 from vision.blink_detection import BlinkDetector
 from vision.redness_detection import calc_redness
